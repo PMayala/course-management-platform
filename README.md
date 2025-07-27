@@ -1146,12 +1146,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 For support and questions:
 
-- 📧 Email: [support@coursemanagement.com](mailto:support@coursemanagement.com)
-- 💬 GitHub Issues: [Create an issue](https://github.com/yourusername/course-management-platform/issues)
-- 📖 Documentation: [Wiki](https://github.com/yourusername/course-management-platform/wiki)
+- 📧 Email: [p.mayala@alustudent.com](mailto:p.mayala@alustudent.com)
 
 ---
-
-**Made with ❤️ for Academic Excellence**
-
-*This project demonstrates enterprise-level backend development practices including authentication, authorization, database design, background job processing, internationalization, and comprehensive testing.*
