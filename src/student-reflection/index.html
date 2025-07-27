@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-translate="page_title">Course Reflection</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <!-- Language Switcher -->
+        <div class="language-switcher">
+            <button class="lang-btn active" data-lang="en">English</button>
+            <button class="lang-btn" data-lang="fr">Français</button>
+        </div>
+
+        <!-- Header -->
+        <header class="header">
+            <h1 data-translate="welcome_title">Welcome to Your Course Reflection</h1>
+            <p data-translate="welcome_message">
+                Take a moment to reflect on your learning journey. Your thoughts and feedback are valuable for improving the course experience.
+            </p>
+        </header>
+
+        <!-- Reflection Form -->
+        <main class="main-content">
+            <form class="reflection-form" id="reflectionForm">
+                <!-- Question 1 -->
+                <div class="question-group">
+                    <label for="question1" data-translate="question1_label">
+                        What did you enjoy most about this course?
+                    </label>
+                    <textarea 
+                        id="question1" 
+                        name="question1" 
+                        rows="4" 
+                        data-translate-placeholder="question1_placeholder"
+                        placeholder="Share what aspects of the course you found most engaging and enjoyable..."
+                    ></textarea>
+                </div>
+
+                <!-- Question 2 -->
+                <div class="question-group">
+                    <label for="question2" data-translate="question2_label">
+                        What was the most challenging part of the course?
+                    </label>
+                    <textarea 
+                        id="question2" 
+                        name="question2" 
+                        rows="4" 
+                        data-translate-placeholder="question2_placeholder"
+                        placeholder="Describe the challenges you faced and how you overcame them..."
+                    ></textarea>
+                </div>
+
+                <!-- Question 3 -->
+                <div class="question-group">
+                    <label for="question3" data-translate="question3_label">
+                        What suggestions do you have for improving this course?
+                    </label>
+                    <textarea 
+                        id="question3" 
+                        name="question3" 
+                        rows="4" 
+                        data-translate-placeholder="question3_placeholder"
+                        placeholder="Share your ideas for making this course even better for future students..."
+                    ></textarea>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" id="saveBtn" data-translate="save_draft">
+                        Save Draft
+                    </button>
+                    <button type="button" class="btn btn-secondary" id="clearBtn" data-translate="clear_form">
+                        Clear Form
+                    </button>
+                    <button type="submit" class="btn btn-primary" data-translate="submit_reflection">
+                        Submit Reflection
+                    </button>
+                </div>
+            </form>
+
+            <!-- Auto-save indicator -->
+            <div class="auto-save-indicator" id="autoSaveIndicator">
+                <span data-translate="auto_saved">Draft auto-saved</span>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p data-translate="footer_text">
+                Thank you for taking the time to reflect on your learning experience.
+            </p>
+            <p class="course-info">
+                <span data-translate="course_code">Course Code:</span> CS-CMP-2024 | 
+                <span data-translate="academic_year">Academic Year:</span> 2024
+            </p>
+        </footer>
+    </div>
+
+    <!-- Success Modal -->
+    <div class="modal" id="successModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 data-translate="success_title">Reflection Submitted Successfully!</h2>
+            </div>
+            <div class="modal-body">
+                <p data-translate="success_message">
+                    Thank you for sharing your thoughts. Your feedback helps us improve the course for future students.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" id="closeModal" data-translate="close">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="translations.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
