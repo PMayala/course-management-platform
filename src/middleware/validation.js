@@ -13,6 +13,7 @@ const validate = (schema) => {
   };
 };
 
+
 // Validation schemas
 const schemas = {
   register: Joi.object({
