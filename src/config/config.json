@@ -1,7 +1,7 @@
 {
   "development": {
     "username": "root",
-    "password": "password",
+    "password": "123456",
     "database": "course_management",
     "host": "localhost",
     "dialect": "mysql",
@@ -9,7 +9,7 @@
   },
   "test": {
     "username": "root",
-    "password": "password", 
+    "password": "123456", 
     "database": "course_management_test",
     "host": "localhost",
     "dialect": "mysql",
