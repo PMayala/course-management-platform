@@ -2,46 +2,39 @@
   "name": "course-management-platform",
   "version": "1.0.0",
   "description": "Backend service for Course Management Platform",
-  "main": "src/server.js",
+  "main": "server.js",
+  "private": true,
   "scripts": {
-    "start": "node src/server.js",
-    "dev": "nodemon src/server.js",
+    "dev": "nodemon server.js",
+    "start": "node server.js",
     "test": "jest",
     "test:watch": "jest --watch",
-    "migrate": "npx sequelize-cli db:migrate",
-    "seed": "npx sequelize-cli db:seed:all"
+    "seed": "node scripts/seedData.js"
   },
   "dependencies": {
-    "express": "^4.18.2",
-    "mysql2": "^3.6.0",
-    "sequelize": "^6.32.1",
     "bcryptjs": "^2.4.3",
-    "jsonwebtoken": "^9.0.2",
-    "joi": "^17.9.2",
-    "cors": "^2.8.5",
-    "helmet": "^7.0.0",
-    "morgan": "^1.10.0",
-    "dotenv": "^16.3.1",
-    "redis": "^4.6.7",
     "bull": "^4.11.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "express-rate-limit": "^6.10.0",
+    "express-validator": "^7.0.1",
+    "helmet": "^7.0.0",
+    "jsonwebtoken": "^9.0.2",
+    "multer": "^1.4.5-lts.1",
+    "mysql2": "^3.6.0",
+    "redis": "^4.6.7",
+    "sequelize": "^6.32.1",
     "swagger-jsdoc": "^6.2.8",
-    "swagger-ui-express": "^5.0.0",
-    "express-rate-limit": "^6.10.0"
+    "swagger-ui-express": "^5.0.0"
   },
   "devDependencies": {
+    "@types/node": "^22",
     "jest": "^29.6.2",
-    "supertest": "^6.3.3",
     "nodemon": "^3.0.1",
-    "sequelize-cli": "^6.6.1"
+    "supertest": "^6.3.3"
   },
-  "jest": {
-    "testEnvironment": "node",
-    "collectCoverageFrom": [
-      "src/**/*.js",
-      "!src/server.js",
-      "!src/config/**",
-      "!src/migrations/**",
-      "!src/seeders/**"
-    ]
-  }
+  "keywords": ["course-management", "education", "backend", "api"],
+  "author": "Plamedi Mayala",
+  "license": "MIT"
 }
