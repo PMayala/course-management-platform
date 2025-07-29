@@ -583,12 +583,3 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 </div>
 
 ---
-
-<div align="center">
-
-**🎓 Built with ❤️ for academic institutions**
-
-![Made with Love](https://img.shields.io/badge/Made%20with-❤️-red?style=for-the-badge)
-![For Education](https://img.shields.io/badge/For-Education-blue?style=for-the-badge&logo=education&logoColor=white)
-
-</div>
