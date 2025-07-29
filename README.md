@@ -330,4 +330,3 @@ For issues and questions:
 
 ---
 
-**Built with ❤️ for academic institutions worldwide**
