@@ -6,7 +6,8 @@ const {
   Facilitator, 
   Mode,
   User,
-  ActivityTracker 
+  ActivityTracker,
+  sequelize
 } = require('../models');
 const { Op } = require('sequelize');
 const logger = require('../utils/logger');
@@ -170,51 +171,50 @@ class CourseService {
     }
   }
   
-// Update the assignFacilitator method:
-async assignFacilitator(courseOfferingId, facilitatorId) {
-  const transaction = await sequelize.transaction();
-  
-  try {
-    const courseOffering = await CourseOffering.findByPk(courseOfferingId, { transaction });
+  async assignFacilitator(courseOfferingId, facilitatorId) {
+    const transaction = await sequelize.transaction();
     
-    if (!courseOffering) {
-      throw new Error('Course offering not found');
+    try {
+      const courseOffering = await CourseOffering.findByPk(courseOfferingId, { transaction });
+      
+      if (!courseOffering) {
+        throw new Error('Course offering not found');
+      }
+      
+      const facilitator = await Facilitator.findByPk(facilitatorId, { transaction });
+      
+      if (!facilitator) {
+        throw new Error('Facilitator not found');
+      }
+      
+      if (!facilitator.isAvailable) {
+        throw new Error('Facilitator is not available');
+      }
+      
+      if (!facilitator.canTakeMoreCourses()) {
+        throw new Error(`Facilitator has reached maximum course load (${facilitator.maxCourseLoad})`);
+      }
+      
+      // Update facilitator assignment
+      const oldFacilitatorId = courseOffering.facilitatorId;
+      courseOffering.facilitatorId = facilitatorId;
+      await courseOffering.save({ transaction });
+      
+      // Update course loads
+      if (oldFacilitatorId && oldFacilitatorId !== facilitatorId) {
+        await this.updateFacilitatorLoad(oldFacilitatorId, -1, transaction);
+      }
+      await this.updateFacilitatorLoad(facilitatorId, 1, transaction);
+      
+      await transaction.commit();
+      
+      return this.getCourseOfferingById(courseOfferingId);
+    } catch (error) {
+      await transaction.rollback();
+      logger.error('Assign facilitator error:', error);
+      throw error;
     }
-    
-    const facilitator = await Facilitator.findByPk(facilitatorId, { transaction });
-    
-    if (!facilitator) {
-      throw new Error('Facilitator not found');
-    }
-    
-    if (!facilitator.isAvailable) {
-      throw new Error('Facilitator is not available');
-    }
-    
-    if (!facilitator.canTakeMoreCourses()) {
-      throw new Error(`Facilitator has reached maximum course load (${facilitator.maxCourseLoad})`);
-    }
-    
-    // Update facilitator assignment
-    const oldFacilitatorId = courseOffering.facilitatorId;
-    courseOffering.facilitatorId = facilitatorId;
-    await courseOffering.save({ transaction });
-    
-    // Update course loads
-    if (oldFacilitatorId && oldFacilitatorId !== facilitatorId) {
-      await this.updateFacilitatorLoad(oldFacilitatorId, -1, transaction);
-    }
-    await this.updateFacilitatorLoad(facilitatorId, 1, transaction);
-    
-    await transaction.commit();
-    
-    return this.getCourseOfferingById(courseOfferingId);
-  } catch (error) {
-    await transaction.rollback();
-    logger.error('Assign facilitator error:', error);
-    throw error;
   }
-}
   
   async getFacilitatorCourses(facilitatorId) {
     try {
@@ -244,12 +244,12 @@ async assignFacilitator(courseOfferingId, facilitatorId) {
     }
   }
   
-  async updateFacilitatorLoad(facilitatorId, change) {
+  async updateFacilitatorLoad(facilitatorId, change, transaction = null) {
     try {
-      const facilitator = await Facilitator.findByPk(facilitatorId);
+      const facilitator = await Facilitator.findByPk(facilitatorId, { transaction });
       if (facilitator) {
         facilitator.currentCourseLoad += change;
-        await facilitator.save();
+        await facilitator.save({ transaction });
       }
     } catch (error) {
       logger.error('Update facilitator load error:', error);

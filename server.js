@@ -48,24 +48,36 @@ async function startServer() {
     })
 
     // Graceful shutdown
-    process.on("SIGTERM", async () => {
-      logger.info("SIGTERM signal received: closing HTTP server")
-      reminderJob.destroy()
-      server.close(() => {
-        logger.info("HTTP server closed")
+    process.on('SIGTERM', async () => {
+      logger.info('SIGTERM signal received: closing HTTP server')
+      reminderJob.stop()
+
+      server.close(async () => {
+        logger.info('HTTP server closed')
+        try {
+          await sequelize.close()
+          logger.info('Database connection closed')
+        } catch (error) {
+          logger.error('Error closing database:', error)
+        }
+        process.exit(0)
       })
-      await sequelize.close()
-      process.exit(0)
     })
 
-    process.on("SIGINT", async () => {
-      logger.info("SIGINT signal received: closing HTTP server")
-      reminderJob.destroy()
-      server.close(() => {
-        logger.info("HTTP server closed")
+    process.on('SIGINT', async () => {
+      logger.info('SIGINT signal received: closing HTTP server')
+      reminderJob.stop()
+
+      server.close(async () => {
+        logger.info('HTTP server closed')
+        try {
+          await sequelize.close()
+          logger.info('Database connection closed')
+        } catch (error) {
+          logger.error('Error closing database:', error)
+        }
+        process.exit(0)
       })
-      await sequelize.close()
-      process.exit(0)
     })
   } catch (error) {
     logger.error("Unable to start server:", error)
