@@ -2,6 +2,7 @@ const jwt = require('jsonwebtoken');
 const { User } = require('../models');
 const logger = require('../utils/logger');
 
+// Update the authenticate function:
 const authenticate = async (req, res, next) => {
   try {
     const token = req.header('Authorization')?.replace('Bearer ', '');
@@ -10,6 +11,15 @@ const authenticate = async (req, res, next) => {
       return res.status(401).json({
         error: 'Authentication required',
         message: 'Please provide a valid authentication token'
+      });
+    }
+
+    // Validate JWT secret is configured
+    if (!process.env.JWT_SECRET) {
+      logger.error('JWT_SECRET not configured');
+      return res.status(500).json({ 
+        error: 'Server configuration error',
+        message: 'Authentication system not properly configured'
       });
     }
 
@@ -23,7 +33,7 @@ const authenticate = async (req, res, next) => {
     });
 
     if (!user) {
-      throw new Error('User not found');
+      throw new Error('User not found or inactive');
     }
 
     // Update last login
@@ -57,6 +67,7 @@ const authenticate = async (req, res, next) => {
     });
   }
 };
+
 
 const authorize = (...roles) => {
   return (req, res, next) => {

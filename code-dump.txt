@@ -1755,12 +1755,16 @@ module.exports = {
 ```html
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Course Management Platform - Student Reflection Page">
+    <meta name="keywords" content="education, course, reflection, multilingual">
     <title>Course Reflection - Student Portal</title>
     <link rel="stylesheet" href="styles.css">
 </head>
+
 <body>
     <div class="container">
         <!-- Language Switcher -->
@@ -1779,38 +1783,26 @@ module.exports = {
         <main>
             <section class="reflection-section">
                 <h2 id="reflection-heading">Share Your Experience</h2>
-                
+
                 <!-- Question 1 -->
                 <div class="question-block">
                     <h3 id="question-1">What did you enjoy most about the course?</h3>
-                    <textarea 
-                        id="answer-1" 
-                        class="answer-textarea" 
-                        rows="4" 
-                        placeholder="Type your answer here..."
-                    ></textarea>
+                    <textarea id="answer-1" class="answer-textarea" rows="4"
+                        placeholder="Type your answer here..."></textarea>
                 </div>
 
                 <!-- Question 2 -->
                 <div class="question-block">
                     <h3 id="question-2">What was the most challenging part?</h3>
-                    <textarea 
-                        id="answer-2" 
-                        class="answer-textarea" 
-                        rows="4" 
-                        placeholder="Type your answer here..."
-                    ></textarea>
+                    <textarea id="answer-2" class="answer-textarea" rows="4"
+                        placeholder="Type your answer here..."></textarea>
                 </div>
 
                 <!-- Question 3 -->
                 <div class="question-block">
                     <h3 id="question-3">What could be improved?</h3>
-                    <textarea 
-                        id="answer-3" 
-                        class="answer-textarea" 
-                        rows="4" 
-                        placeholder="Type your answer here..."
-                    ></textarea>
+                    <textarea id="answer-3" class="answer-textarea" rows="4"
+                        placeholder="Type your answer here..."></textarea>
                 </div>
 
                 <!-- Submit Button -->
@@ -1830,6 +1822,7 @@ module.exports = {
     <script src="translations.js"></script>
     <script src="index.js"></script>
 </body>
+
 </html>
 ```
 
@@ -5787,12 +5780,19 @@ module.exports = (sequelize) => {
       autoIncrement: true
     },
     name: {
-      type: DataTypes.ENUM('Online', 'In-person', 'Hybrid'),
+      type: DataTypes.STRING(50),
       allowNull: false,
-      unique: true
+      unique: true,
+      validate: {
+        notEmpty: true,
+        len: [2, 50]
+      }
     },
     description: {
-      type: DataTypes.TEXT
+      type: DataTypes.TEXT,
+      validate: {
+        len: [0, 500]
+      }
     },
     requiresPhysicalPresence: {
       type: DataTypes.BOOLEAN,
@@ -5803,8 +5803,27 @@ module.exports = (sequelize) => {
     tableName: 'modes',
     timestamps: true,
     underscored: true,
-    paranoid: true
+    paranoid: true,
+    indexes: [
+      {
+        unique: true,
+        fields: ['name']
+      }
+    ]
   });
+
+  // Instance methods
+  Mode.prototype.isOnline = function() {
+    return this.name.toLowerCase().includes('online') && !this.requiresPhysicalPresence;
+  };
+
+  Mode.prototype.isInPerson = function() {
+    return this.name.toLowerCase().includes('person') && this.requiresPhysicalPresence;
+  };
+
+  Mode.prototype.isHybrid = function() {
+    return this.name.toLowerCase().includes('hybrid');
+  };
 
   return Mode;
 };
@@ -6539,6 +6558,273 @@ module.exports = router;
 ```
 
 
+/* ========== src\routes\classRoutes.js ========== */
+```javascript
+const express = require('express');
+const router = express.Router();
+const { authenticate, authorize } = require('../middleware/auth');
+const { validate } = require('../middleware/validation');
+const { Class } = require('../models');
+const logger = require('../utils/logger');
+
+/**
+ * @swagger
+ * /classes:
+ *   get:
+ *     summary: Get all classes
+ *     tags: [Classes]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of classes
+ *       401:
+ *         description: Unauthorized
+ */
+router.get('/', authenticate, async (req, res) => {
+  try {
+    const classes = await Class.findAll({
+      order: [['year', 'DESC'], ['section', 'ASC']]
+    });
+    res.json({ classes });
+  } catch (error) {
+    logger.error('Get classes error:', error);
+    res.status(500).json({ error: 'Failed to fetch classes' });
+  }
+});
+
+/**
+ * @swagger
+ * /classes:
+ *   post:
+ *     summary: Create a new class
+ *     tags: [Classes]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - name
+ *               - year
+ *               - section
+ *             properties:
+ *               name:
+ *                 type: string
+ *               year:
+ *                 type: integer
+ *               section:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Class created successfully
+ *       400:
+ *         description: Validation error
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - Managers only
+ */
+router.post('/', authenticate, authorize('manager', 'admin'), async (req, res) => {
+  try {
+    const classEntity = await Class.create(req.body);
+    logger.info(`Class created: ${classEntity.name}`);
+    res.status(201).json({ 
+      message: 'Class created successfully', 
+      class: classEntity 
+    });
+  } catch (error) {
+    logger.error('Create class error:', error);
+    if (error.name === 'SequelizeUniqueConstraintError') {
+      return res.status(409).json({
+        error: 'Duplicate class',
+        message: 'A class with this name already exists'
+      });
+    }
+    res.status(500).json({ error: 'Failed to create class' });
+  }
+});
+
+module.exports = router;
+```
+
+
+/* ========== src\routes\cohortRoutes.js ========== */
+```javascript
+const express = require('express');
+const router = express.Router();
+const { authenticate, authorize } = require('../middleware/auth');
+const { validate } = require('../middleware/validation');
+const { Cohort, Student, User } = require('../models');
+const logger = require('../utils/logger');
+
+/**
+ * @swagger
+ * /cohorts:
+ *   get:
+ *     summary: Get all cohorts
+ *     tags: [Cohorts]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of cohorts
+ *       401:
+ *         description: Unauthorized
+ */
+router.get('/', authenticate, async (req, res) => {
+  try {
+    const cohorts = await Cohort.findAll({
+      where: { isActive: true },
+      include: [{ 
+        model: Student, 
+        as: 'students',
+        attributes: ['id'],
+        include: [{
+          model: User,
+          as: 'user',
+          attributes: ['firstName', 'lastName', 'email']
+        }]
+      }],
+      order: [['startDate', 'DESC']]
+    });
+
+    // Add student count to each cohort
+    const cohortsWithCount = cohorts.map(cohort => ({
+      ...cohort.toJSON(),
+      studentCount: cohort.students.length
+    }));
+
+    res.json({ cohorts: cohortsWithCount });
+  } catch (error) {
+    logger.error('Get cohorts error:', error);
+    res.status(500).json({ error: 'Failed to fetch cohorts' });
+  }
+});
+
+/**
+ * @swagger
+ * /cohorts:
+ *   post:
+ *     summary: Create a new cohort
+ *     tags: [Cohorts]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - name
+ *               - code
+ *               - startDate
+ *               - endDate
+ *               - program
+ *             properties:
+ *               name:
+ *                 type: string
+ *               code:
+ *                 type: string
+ *               startDate:
+ *                 type: string
+ *                 format: date
+ *               endDate:
+ *                 type: string
+ *                 format: date
+ *               program:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Cohort created successfully
+ *       400:
+ *         description: Validation error
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - Managers only
+ */
+router.post('/', authenticate, authorize('manager', 'admin'), async (req, res) => {
+  try {
+    const cohort = await Cohort.create(req.body);
+    logger.info(`Cohort created: ${cohort.code}`);
+    res.status(201).json({ 
+      message: 'Cohort created successfully', 
+      cohort 
+    });
+  } catch (error) {
+    logger.error('Create cohort error:', error);
+    if (error.name === 'SequelizeUniqueConstraintError') {
+      return res.status(409).json({
+        error: 'Duplicate cohort',
+        message: 'A cohort with this code already exists'
+      });
+    }
+    res.status(500).json({ error: 'Failed to create cohort' });
+  }
+});
+
+/**
+ * @swagger
+ * /cohorts/{id}:
+ *   get:
+ *     summary: Get cohort by ID
+ *     tags: [Cohorts]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Cohort details
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Cohort not found
+ */
+router.get('/:id', authenticate, validate('idParam'), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const cohort = await Cohort.findByPk(id, {
+      include: [{ 
+        model: Student, 
+        as: 'students',
+        include: [{
+          model: User,
+          as: 'user',
+          attributes: ['firstName', 'lastName', 'email']
+        }]
+      }]
+    });
+
+    if (!cohort) {
+      return res.status(404).json({
+        error: 'Not found',
+        message: 'Cohort not found'
+      });
+    }
+
+    res.json({ cohort });
+  } catch (error) {
+    logger.error('Get cohort error:', error);
+    res.status(500).json({ error: 'Failed to fetch cohort' });
+  }
+});
+
+module.exports = router;
+```
+
+
 /* ========== src\routes\courseRoutes.js ========== */
 ```javascript
 const express = require('express');
@@ -6877,30 +7163,229 @@ module.exports = router;
 const express = require('express');
 const router = express.Router();
 
+// Import route modules
 const authRoutes = require('./authRoutes');
 const courseRoutes = require('./courseRoutes');
 const activityRoutes = require('./activityRoutes');
 const userRoutes = require('./userRoutes');
+const classRoutes = require('./classRoutes');
+const cohortRoutes = require('./cohortRoutes');
+const modeRoutes = require('./modeRoutes');
 
 // Mount routes
 router.use('/auth', authRoutes);
 router.use('/courses', courseRoutes);
 router.use('/activities', activityRoutes);
 router.use('/users', userRoutes);
+router.use('/classes', classRoutes);
+router.use('/cohorts', cohortRoutes);
+router.use('/modes', modeRoutes);
 
 // Base route
 router.get('/', (req, res) => {
   res.json({
     message: 'Course Management Platform API',
     version: '1.0.0',
+    environment: process.env.NODE_ENV || 'development',
     endpoints: {
       auth: '/api/auth',
       courses: '/api/courses',
       activities: '/api/activities',
       users: '/api/users',
+      classes: '/api/classes',
+      cohorts: '/api/cohorts',
+      modes: '/api/modes',
       documentation: '/api-docs'
+    },
+    features: {
+      authentication: 'JWT-based with role management',
+      database: 'MySQL with Sequelize ORM',
+      notifications: 'Redis-backed queue system',
+      i18n: 'Student reflection page with language switching'
     }
   });
+});
+
+// Database seeding endpoint (development only)
+if (process.env.NODE_ENV !== 'production') {
+  router.post('/seed', async (req, res) => {
+    try {
+      const seedDatabase = require('../utils/seedDatabase');
+      await seedDatabase();
+      res.json({ 
+        message: 'Database seeded successfully',
+        note: 'Check server logs for login credentials'
+      });
+    } catch (error) {
+      console.error('Seed error:', error);
+      res.status(500).json({ 
+        error: 'Failed to seed database',
+        message: error.message
+      });
+    }
+  });
+}
+
+// Health monitoring endpoints
+router.get('/monitoring/redis', async (req, res) => {
+  try {
+    const { redisClient } = require('../config/redis');
+    // Simple ping test
+    await redisClient.ping();
+    res.json({ 
+      status: 'OK', 
+      service: 'Redis',
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    res.status(503).json({ 
+      status: 'ERROR', 
+      service: 'Redis',
+      error: error.message,
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
+router.get('/monitoring/mysql', async (req, res) => {
+  try {
+    const { sequelize } = require('../models');
+    await sequelize.authenticate();
+    res.json({ 
+      status: 'OK', 
+      service: 'MySQL',
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    res.status(503).json({ 
+      status: 'ERROR', 
+      service: 'MySQL',
+      error: error.message,
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
+router.get('/monitoring/status', async (req, res) => {
+  const status = {
+    api: 'OK',
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV,
+    services: {}
+  };
+
+  // Check Redis
+  try {
+    const { redisClient } = require('../config/redis');
+    await redisClient.ping();
+    status.services.redis = 'OK';
+  } catch (error) {
+    status.services.redis = 'ERROR';
+  }
+
+  // Check MySQL
+  try {
+    const { sequelize } = require('../models');
+    await sequelize.authenticate();
+    status.services.mysql = 'OK';
+  } catch (error) {
+    status.services.mysql = 'ERROR';
+  }
+
+  const hasErrors = Object.values(status.services).includes('ERROR');
+  res.status(hasErrors ? 503 : 200).json(status);
+});
+
+module.exports = router;
+```
+
+
+/* ========== src\routes\modeRoutes.js ========== */
+```javascript
+const express = require('express');
+const router = express.Router();
+const { authenticate, authorize } = require('../middleware/auth');
+const { validate } = require('../middleware/validation');
+const { Mode } = require('../models');
+const logger = require('../utils/logger');
+
+/**
+ * @swagger
+ * /modes:
+ *   get:
+ *     summary: Get all delivery modes
+ *     tags: [Modes]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of delivery modes
+ *       401:
+ *         description: Unauthorized
+ */
+router.get('/', authenticate, async (req, res) => {
+  try {
+    const modes = await Mode.findAll({
+      order: [['name', 'ASC']]
+    });
+    res.json({ modes });
+  } catch (error) {
+    logger.error('Get modes error:', error);
+    res.status(500).json({ error: 'Failed to fetch modes' });
+  }
+});
+
+/**
+ * @swagger
+ * /modes:
+ *   post:
+ *     summary: Create a new delivery mode
+ *     tags: [Modes]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - name
+ *             properties:
+ *               name:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *               requiresPhysicalPresence:
+ *                 type: boolean
+ *     responses:
+ *       201:
+ *         description: Mode created successfully
+ *       400:
+ *         description: Validation error
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - Managers only
+ */
+router.post('/', authenticate, authorize('manager', 'admin'), async (req, res) => {
+  try {
+    const mode = await Mode.create(req.body);
+    logger.info(`Mode created: ${mode.name}`);
+    res.status(201).json({ 
+      message: 'Mode created successfully', 
+      mode 
+    });
+  } catch (error) {
+    logger.error('Create mode error:', error);
+    if (error.name === 'SequelizeUniqueConstraintError') {
+      return res.status(409).json({
+        error: 'Duplicate mode',
+        message: 'A mode with this name already exists'
+      });
+    }
+    res.status(500).json({ error: 'Failed to create mode' });
+  }
 });
 
 module.exports = router;
@@ -7190,6 +7675,8 @@ const {
   ActivityTracker, 
   CourseOffering, 
   Module, 
+  Class,
+  Cohort,
   Facilitator,
   User
 } = require('../models');
@@ -9478,6 +9965,549 @@ module.exports = {
   hashPassword,
   generateTestTokens,
 }
+```
+
+
+/* ========== tests\integration\activityTracker.test.js ========== */
+```javascript
+const request = require('supertest');
+const app = require('../../src/app');
+const { sequelize } = require('../../src/models');
+const { generateTestTokens } = require('../fixtures/testData');
+
+describe('Activity Tracker Integration Tests', () => {
+  let managerToken, facilitatorToken;
+  let testCourseOffering, testFacilitator;
+
+  beforeAll(async () => {
+    await sequelize.sync({ force: true });
+    
+    const tokens = generateTestTokens();
+    managerToken = tokens.managerToken;
+    facilitatorToken = tokens.facilitatorToken;
+
+    // Set up test data
+    const { 
+      Module, Class, Cohort, Mode, CourseOffering, 
+      User, Facilitator 
+    } = require('../../src/models');
+    
+    const testModule = await Module.create({
+      code: 'CS101',
+      name: 'Test Module',
+      credits: 3,
+      level: '100'
+    });
+
+    const testClass = await Class.create({
+      name: '2025S',
+      year: 2025,
+      section: 'S'
+    });
+
+    const testCohort = await Cohort.create({
+      name: 'Test Cohort',
+      code: 'TC2025',
+      startDate: '2025-01-01',
+      endDate: '2028-12-31',
+      program: 'Test Program'
+    });
+
+    const testMode = await Mode.create({
+      name: 'Online',
+      description: 'Online delivery'
+    });
+
+    const facilitatorUser = await User.create({
+      id: 3, // Match the token
+      email: 'facilitator@test.com',
+      password: 'Password123!',
+      firstName: 'John',
+      lastName: 'Facilitator',
+      role: 'facilitator'
+    });
+
+    testFacilitator = await Facilitator.create({
+      userId: facilitatorUser.id,
+      employeeId: 'FAC001',
+      department: 'Computer Science'
+    });
+
+    testCourseOffering = await CourseOffering.create({
+      moduleId: testModule.id,
+      classId: testClass.id,
+      cohortId: testCohort.id,
+      facilitatorId: testFacilitator.id,
+      modeId: testMode.id,
+      trimester: 1,
+      intakePeriod: 'HT1',
+      startDate: '2025-09-01',
+      endDate: '2025-12-15'
+    });
+  });
+
+  afterAll(async () => {
+    await sequelize.close();
+  });
+
+  describe('Activity Log Management', () => {
+    it('should allow facilitator to create activity log', async () => {
+      const logData = {
+        allocationId: testCourseOffering.id,
+        weekNumber: 1,
+        attendance: [true, true, false, true, true],
+        formativeOneGrading: 'Done',
+        formativeTwoGrading: 'Pending',
+        summativeGrading: 'Not Started',
+        courseModeration: 'Done',
+        intranetSync: 'Done',
+        gradeBookStatus: 'Pending',
+        notes: 'Test activity log'
+      };
+
+      const response = await request(app)
+        .post('/api/activities')
+        .set('Authorization', `Bearer ${facilitatorToken}`)
+        .send(logData)
+        .expect(201);
+
+      expect(response.body.message).toBe('Activity log created successfully');
+      expect(response.body.activityLog).toBeDefined();
+    });
+
+    it('should prevent duplicate activity logs for same week', async () => {
+      const logData = {
+        allocationId: testCourseOffering.id,
+        weekNumber: 2,
+        attendance: [true, true, true]
+      };
+
+      // Create first log
+      await request(app)
+        .post('/api/activities')
+        .set('Authorization', `Bearer ${facilitatorToken}`)
+        .send(logData)
+        .expect(201);
+
+      // Attempt duplicate
+      await request(app)
+        .post('/api/activities')
+        .set('Authorization', `Bearer ${facilitatorToken}`)
+        .send(logData)
+        .expect(409);
+    });
+
+    it('should allow manager to view all activity logs', async () => {
+      const response = await request(app)
+        .get('/api/activities')
+        .set('Authorization', `Bearer ${managerToken}`)
+        .expect(200);
+
+      expect(response.body.activityLogs).toBeDefined();
+      expect(response.body.pagination).toBeDefined();
+    });
+
+    it('should allow facilitator to view only their logs', async () => {
+      const response = await request(app)
+        .get('/api/activities/my-logs')
+        .set('Authorization', `Bearer ${facilitatorToken}`)
+        .expect(200);
+
+      expect(response.body.activityLogs).toBeDefined();
+    });
+
+    it('should provide weekly summary for managers', async () => {
+      const response = await request(app)
+        .get('/api/activities/summary?weekNumber=1')
+        .set('Authorization', `Bearer ${managerToken}`)
+        .expect(200);
+
+      expect(response.body.weekNumber).toBe(1);
+      expect(response.body.totalExpected).toBeDefined();
+      expect(response.body.totalSubmitted).toBeDefined();
+    });
+  });
+});
+```
+
+
+/* ========== tests\integration\auth.test.js ========== */
+```javascript
+const request = require('supertest');
+const app = require('../../src/app');
+const { sequelize, User } = require('../../src/models');
+
+describe('Authentication Integration Tests', () => {
+  beforeAll(async () => {
+    await sequelize.sync({ force: true });
+  });
+
+  afterAll(async () => {
+    await sequelize.close();
+  });
+
+  afterEach(async () => {
+    await User.destroy({ where: {}, force: true });
+  });
+
+  describe('POST /api/auth/register', () => {
+    it('should register a new manager', async () => {
+      const userData = {
+        email: 'manager@test.com',
+        password: 'Password123!',
+        firstName: 'John',
+        lastName: 'Manager',
+        role: 'manager',
+        employeeId: 'MGR001',
+        department: 'Computer Science'
+      };
+
+      const response = await request(app)
+        .post('/api/auth/register')
+        .send(userData)
+        .expect(201);
+
+      expect(response.body.message).toBe('Registration successful');
+      expect(response.body.user.email).toBe(userData.email);
+      expect(response.body.user.role).toBe('manager');
+      expect(response.body.tokens).toBeDefined();
+      expect(response.body.tokens.accessToken).toBeDefined();
+      expect(response.body.tokens.refreshToken).toBeDefined();
+    });
+
+    it('should register a new facilitator', async () => {
+      const userData = {
+        email: 'facilitator@test.com',
+        password: 'Password123!',
+        firstName: 'Jane',
+        lastName: 'Facilitator',
+        role: 'facilitator',
+        employeeId: 'FAC001',
+        department: 'Computer Science',
+        specialization: 'Web Development'
+      };
+
+      const response = await request(app)
+        .post('/api/auth/register')
+        .send(userData)
+        .expect(201);
+
+      expect(response.body.user.role).toBe('facilitator');
+      expect(response.body.user.facilitator).toBeDefined();
+    });
+
+    it('should register a new student', async () => {
+      // First create a cohort for the student
+      const { Cohort } = require('../../src/models');
+      const cohort = await Cohort.create({
+        name: 'Test Cohort',
+        code: 'TC2025',
+        startDate: '2025-01-01',
+        endDate: '2028-12-31',
+        program: 'Computer Science'
+      });
+
+      const userData = {
+        email: 'student@test.com',
+        password: 'Password123!',
+        firstName: 'Alice',
+        lastName: 'Student',
+        role: 'student',
+        studentId: '202500001',
+        cohortId: cohort.id
+      };
+
+      const response = await request(app)
+        .post('/api/auth/register')
+        .send(userData)
+        .expect(201);
+
+      expect(response.body.user.role).toBe('student');
+      expect(response.body.user.student).toBeDefined();
+    });
+
+    it('should reject duplicate email', async () => {
+      const userData = {
+        email: 'test@test.com',
+        password: 'Password123!',
+        firstName: 'John',
+        lastName: 'Doe',
+        role: 'student'
+      };
+
+      await request(app)
+        .post('/api/auth/register')
+        .send(userData)
+        .expect(201);
+
+      await request(app)
+        .post('/api/auth/register')
+        .send(userData)
+        .expect(409);
+    });
+
+    it('should reject invalid password', async () => {
+      const userData = {
+        email: 'test@test.com',
+        password: 'weak',
+        firstName: 'John',
+        lastName: 'Doe',
+        role: 'student'
+      };
+
+      await request(app)
+        .post('/api/auth/register')
+        .send(userData)
+        .expect(400);
+    });
+  });
+
+  describe('POST /api/auth/login', () => {
+    beforeEach(async () => {
+      const userData = {
+        email: 'test@test.com',
+        password: 'Password123!',
+        firstName: 'John',
+        lastName: 'Doe',
+        role: 'admin'
+      };
+
+      await request(app)
+        .post('/api/auth/register')
+        .send(userData);
+    });
+
+    it('should login with valid credentials', async () => {
+      const response = await request(app)
+        .post('/api/auth/login')
+        .send({
+          email: 'test@test.com',
+          password: 'Password123!'
+        })
+        .expect(200);
+
+      expect(response.body.message).toBe('Login successful');
+      expect(response.body.tokens).toBeDefined();
+      expect(response.body.user.email).toBe('test@test.com');
+    });
+
+    it('should reject invalid credentials', async () => {
+      await request(app)
+        .post('/api/auth/login')
+        .send({
+          email: 'test@test.com',
+          password: 'wrongpassword'
+        })
+        .expect(401);
+    });
+
+    it('should reject non-existent user', async () => {
+      await request(app)
+        .post('/api/auth/login')
+        .send({
+          email: 'nonexistent@test.com',
+          password: 'Password123!'
+        })
+        .expect(401);
+    });
+  });
+});
+```
+
+
+/* ========== tests\integration\courseAllocation.test.js ========== */
+```javascript
+const request = require('supertest');
+const app = require('../../src/app');
+const { sequelize } = require('../../src/models');
+const { generateTestTokens } = require('../fixtures/testData');
+
+describe('Course Allocation Integration Tests', () => {
+  let managerToken, facilitatorToken, studentToken;
+  let testModule, testClass, testCohort, testMode, testFacilitator;
+
+  beforeAll(async () => {
+    await sequelize.sync({ force: true });
+    
+    // Create test users and get tokens
+    const tokens = generateTestTokens();
+    managerToken = tokens.managerToken;
+    facilitatorToken = tokens.facilitatorToken;
+    studentToken = tokens.studentToken;
+
+    // Create test data
+    const { Module, Class, Cohort, Mode, User, Facilitator } = require('../../src/models');
+    
+    testModule = await Module.create({
+      code: 'CS101',
+      name: 'Intro to CS',
+      credits: 3,
+      level: '100'
+    });
+
+    testClass = await Class.create({
+      name: '2025S',
+      year: 2025,
+      section: 'S'
+    });
+
+    testCohort = await Cohort.create({
+      name: 'CS 2025',
+      code: 'CS2025',
+      startDate: '2025-01-01',
+      endDate: '2028-12-31',
+      program: 'Computer Science'
+    });
+
+    testMode = await Mode.create({
+      name: 'Online',
+      description: 'Online delivery'
+    });
+
+    const facilitatorUser = await User.create({
+      email: 'facilitator@test.com',
+      password: 'Password123!',
+      firstName: 'John',
+      lastName: 'Facilitator',
+      role: 'facilitator'
+    });
+
+    testFacilitator = await Facilitator.create({
+      userId: facilitatorUser.id,
+      employeeId: 'FAC001',
+      department: 'Computer Science'
+    });
+  });
+
+  afterAll(async () => {
+    await sequelize.close();
+  });
+
+  describe('Course Offering Management', () => {
+    it('should allow manager to create course offering', async () => {
+      const offeringData = {
+        moduleId: testModule.id,
+        classId: testClass.id,
+        cohortId: testCohort.id,
+        facilitatorId: testFacilitator.id,
+        modeId: testMode.id,
+        trimester: 1,
+        intakePeriod: 'HT1',
+        startDate: '2025-09-01',
+        endDate: '2025-12-15',
+        maxStudents: 30
+      };
+
+      const response = await request(app)
+        .post('/api/courses')
+        .set('Authorization', `Bearer ${managerToken}`)
+        .send(offeringData)
+        .expect(201);
+
+      expect(response.body.message).toBe('Course offering created successfully');
+      expect(response.body.courseOffering).toBeDefined();
+    });
+
+    it('should prevent duplicate course offerings', async () => {
+      const offeringData = {
+        moduleId: testModule.id,
+        classId: testClass.id,
+        cohortId: testCohort.id,
+        modeId: testMode.id,
+        trimester: 1,
+        intakePeriod: 'HT1',
+        startDate: '2025-09-01',
+        endDate: '2025-12-15'
+      };
+
+      // Create first offering
+      await request(app)
+        .post('/api/courses')
+        .set('Authorization', `Bearer ${managerToken}`)
+        .send(offeringData)
+        .expect(201);
+
+      // Attempt to create duplicate
+      await request(app)
+        .post('/api/courses')
+        .set('Authorization', `Bearer ${managerToken}`)
+        .send(offeringData)
+        .expect(409);
+    });
+
+    it('should deny student access to create course offering', async () => {
+      const offeringData = {
+        moduleId: testModule.id,
+        classId: testClass.id,
+        cohortId: testCohort.id,
+        modeId: testMode.id,
+        trimester: 1,
+        intakePeriod: 'HT1',
+        startDate: '2025-09-01',
+        endDate: '2025-12-15'
+      };
+
+      await request(app)
+        .post('/api/courses')
+        .set('Authorization', `Bearer ${studentToken}`)
+        .send(offeringData)
+        .expect(403);
+    });
+
+    it('should allow filtering course offerings', async () => {
+      const response = await request(app)
+        .get('/api/courses?trimester=1&status=planned')
+        .set('Authorization', `Bearer ${managerToken}`)
+        .expect(200);
+
+      expect(response.body.courseOfferings).toBeDefined();
+      expect(response.body.pagination).toBeDefined();
+    });
+  });
+
+  describe('Module Management', () => {
+    it('should allow manager to create module', async () => {
+      const moduleData = {
+        code: 'CS201',
+        name: 'Data Structures',
+        description: 'Advanced data structures',
+        credits: 4,
+        level: '200'
+      };
+
+      const response = await request(app)
+        .post('/api/courses/modules')
+        .set('Authorization', `Bearer ${managerToken}`)
+        .send(moduleData)
+        .expect(201);
+
+      expect(response.body.message).toBe('Module created successfully');
+      expect(response.body.module.code).toBe('CS201');
+    });
+
+    it('should reject invalid module code format', async () => {
+      const moduleData = {
+        code: 'INVALID',
+        name: 'Invalid Module',
+        credits: 3,
+        level: '100'
+      };
+
+      await request(app)
+        .post('/api/courses/modules')
+        .set('Authorization', `Bearer ${managerToken}`)
+        .send(moduleData)
+        .expect(400);
+    });
+
+    it('should allow all authenticated users to view modules', async () => {
+      await request(app)
+        .get('/api/courses/modules')
+        .set('Authorization', `Bearer ${studentToken}`)
+        .expect(200);
+    });
+  });
+});
 ```
 
 

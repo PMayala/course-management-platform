@@ -35,6 +35,13 @@ app.use('/api/', limiter);
 app.use(bodyParser.json({ limit: '10mb' }));
 app.use(bodyParser.urlencoded({ extended: true, limit: '10mb' }));
 
+// Add request ID for tracking
+app.use((req, res, next) => {
+  req.id = require('crypto').randomUUID();
+  res.setHeader('X-Request-ID', req.id);
+  next();
+});
+
 // Logging middleware
 if (process.env.NODE_ENV !== 'test') {
   app.use(morgan('combined', { stream: { write: message => logger.info(message.trim()) } }));

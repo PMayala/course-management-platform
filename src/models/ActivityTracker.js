@@ -93,7 +93,7 @@ module.exports = (sequelize) => {
     paranoid: true,
     indexes: [
       {
-        name: 'activity_unique_idx', // Shortened name
+        name: 'activity_unique_idx',
         unique: true,
         fields: ['allocation_id', 'week_number']
       },
@@ -102,22 +102,32 @@ module.exports = (sequelize) => {
       },
       {
         fields: ['submitted_at']
+      },
+      // Add composite index for common filtering queries
+      {
+        name: 'activity_status_week_idx',
+        fields: ['week_number', 'submitted_at']
+      },
+      // Add index for facilitator queries
+      {
+        name: 'activity_allocation_week_idx',
+        fields: ['allocation_id', 'week_number', 'submitted_at']
       }
     ]
   });
 
   // Instance methods
-  ActivityTracker.prototype.isComplete = function() {
+  ActivityTracker.prototype.isComplete = function () {
     return this.formativeOneGrading === 'Done' &&
-           this.formativeTwoGrading === 'Done' &&
-           this.summativeGrading === 'Done' &&
-           this.courseModeration === 'Done' &&
-           this.intranetSync === 'Done' &&
-           this.gradeBookStatus === 'Done' &&
-           this.attendance.length > 0;
+      this.formativeTwoGrading === 'Done' &&
+      this.summativeGrading === 'Done' &&
+      this.courseModeration === 'Done' &&
+      this.intranetSync === 'Done' &&
+      this.gradeBookStatus === 'Done' &&
+      this.attendance.length > 0;
   };
 
-  ActivityTracker.prototype.getCompletionPercentage = function() {
+  ActivityTracker.prototype.getCompletionPercentage = function () {
     const statuses = [
       this.formativeOneGrading,
       this.formativeTwoGrading,
@@ -126,19 +136,19 @@ module.exports = (sequelize) => {
       this.intranetSync,
       this.gradeBookStatus
     ];
-    
+
     const completed = statuses.filter(status => status === 'Done').length;
     const hasAttendance = this.attendance.length > 0 ? 1 : 0;
-    
+
     return Math.round(((completed + hasAttendance) / 7) * 100);
   };
 
-  ActivityTracker.prototype.markSubmitted = async function() {
+  ActivityTracker.prototype.markSubmitted = async function () {
     this.submittedAt = new Date();
     await this.save();
   };
 
-  ActivityTracker.prototype.incrementReminderCount = async function() {
+  ActivityTracker.prototype.incrementReminderCount = async function () {
     this.reminderCount += 1;
     this.lastReminderSent = new Date();
     await this.save();

@@ -1,4 +1,6 @@
 require("dotenv").config()
+const validateEnvironment = require('./src/config/validateEnv');
+validateEnvironment();
 const app = require("./src/app")
 const { sequelize } = require("./src/models")
 const logger = require("./src/utils/logger")

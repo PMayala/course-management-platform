@@ -1,14 +1,16 @@
 const logger = require('../utils/logger');
 
 const errorHandler = (err, req, res, next) => {
-  // Log error
+  // Log error with request context
   logger.error('Error:', {
+    requestId: req.id,
     message: err.message,
     stack: err.stack,
     url: req.originalUrl,
     method: req.method,
     ip: req.ip,
-    user: req.user?.id
+    user: req.user?.id,
+    body: req.method === 'POST' || req.method === 'PUT' ? req.body : undefined
   });
 
   // Default error

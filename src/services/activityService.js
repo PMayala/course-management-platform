@@ -2,6 +2,8 @@ const {
   ActivityTracker, 
   CourseOffering, 
   Module, 
+  Class,
+  Cohort,
   Facilitator,
   User
 } = require('../models');

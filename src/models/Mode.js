@@ -8,12 +8,19 @@ module.exports = (sequelize) => {
       autoIncrement: true
     },
     name: {
-      type: DataTypes.ENUM('Online', 'In-person', 'Hybrid'),
+      type: DataTypes.STRING(50),
       allowNull: false,
-      unique: true
+      unique: true,
+      validate: {
+        notEmpty: true,
+        len: [2, 50]
+      }
     },
     description: {
-      type: DataTypes.TEXT
+      type: DataTypes.TEXT,
+      validate: {
+        len: [0, 500]
+      }
     },
     requiresPhysicalPresence: {
       type: DataTypes.BOOLEAN,
@@ -24,8 +31,27 @@ module.exports = (sequelize) => {
     tableName: 'modes',
     timestamps: true,
     underscored: true,
-    paranoid: true
+    paranoid: true,
+    indexes: [
+      {
+        unique: true,
+        fields: ['name']
+      }
+    ]
   });
+
+  // Instance methods
+  Mode.prototype.isOnline = function() {
+    return this.name.toLowerCase().includes('online') && !this.requiresPhysicalPresence;
+  };
+
+  Mode.prototype.isInPerson = function() {
+    return this.name.toLowerCase().includes('person') && this.requiresPhysicalPresence;
+  };
+
+  Mode.prototype.isHybrid = function() {
+    return this.name.toLowerCase().includes('hybrid');
+  };
 
   return Mode;
 };
