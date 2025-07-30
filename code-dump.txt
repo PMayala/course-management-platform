@@ -2347,329 +2347,15 @@ if (typeof module !== 'undefined' && module.exports) {
 
 /* ========== README.md ========== */
 ```markdown
-# Course Management Platform Backend Service
 
-A comprehensive backend system for academic institutions to manage course allocations, track facilitator activities, and monitor student progress with multilingual support.
-
-## 🚀 Features
-
-### Module 1: Course Allocation System
-- **Role-based Access Control**: Managers can create/update course allocations; Facilitators can view assigned courses.
-- **CRUD Operations**: Complete management of course offerings with filtering capabilities.
-- **Smart Assignment**: Automatic tracking of facilitator workload and capacity management.
-- **Advanced Filtering**: Filter by trimester, cohort, intake period, facilitator, and delivery mode.
-
-### Module 2: Facilitator Activity Tracker (FAT)
-- **Weekly Activity Logs**: Comprehensive tracking of attendance, grading, and administrative tasks.
-- **Redis-based Notifications**: Automated reminders and alerts for missing submissions.
-- **Real-time Monitoring**: Managers can monitor submission status and completion rates.
-- **Deadline Management**: Automated tracking of deadlines with escalating notifications.
-
-### Module 3: Student Reflection Page (i18n/l10n)
-- **Multilingual Support**: English and French language switching.
-- **Local Storage**: Auto-save functionality and language preference persistence.
-- **Responsive Design**: Mobile-friendly interface.
-- **GitHub Pages Ready**: Easy deployment to GitHub Pages.
-
-## 🛠 Technology Stack
-
-- **Backend**: Node.js, Express.js
-- **Database**: MySQL with Sequelize ORM
-- **Authentication**: JWT with refresh tokens
-- **Message Queue**: Redis with Bull
-- **API Documentation**: Swagger/OpenAPI 3.0
-- **Testing**: Jest with comprehensive coverage
-- **Security**: bcrypt, helmet, CORS, rate limiting
-- **Logging**: Winston with structured logging
-- **Frontend**: Vanilla HTML, CSS, JavaScript (for reflection page)
-
-## 📋 Prerequisites
-
-- Node.js (v16.0.0 or higher)
-- npm (v8.0.0 or higher)
-- MySQL (v8.0 or higher)
-- Redis (v6.0 or higher)
-- Git
-
-## 🔧 Installation
-
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/yourusername/course-management-platform.git
-   cd course-management-platform
-   ```
-
-2. **Install dependencies**
-   ```bash
-   npm install
-   ```
-
-3. **Environment setup**
-   ```bash
-   cp .env.example .env
-   # Edit .env with your configuration
-   ```
-
-4. **Database setup**
-   ```sql
-   CREATE DATABASE course_management_db;
-   CREATE DATABASE course_management_db_test;
-   ```
-
-5. **Start the application**
-   ```bash
-   # Development mode
-   npm run dev
-
-   # Production mode
-   npm start
-
-   # Run notification worker (in a separate terminal)
-   npm run worker
-   ```
-
-## 🗄️ Database Schema
-
-### Core Entities
-- **Users**: Base authentication with role-based access.
-- **Managers**: Course allocation management capabilities.
-- **Facilitators**: Course delivery and activity tracking.
-- **Students**: Enrollment and progress tracking.
-- **Modules**: Course subjects and curriculum.
-- **CourseOfferings**: Specific course instances.
-- **ActivityTrackers**: Weekly facilitator activity logs.
-
-### Key Relationships
-- Users have role-specific profiles (Manager/Facilitator/Student).
-- CourseOfferings link Modules, Classes, Cohorts, and Facilitators.
-- ActivityTrackers belong to CourseOfferings.
-- Students belong to Cohorts.
-
-## 🔐 Authentication & Authorization
-
-### JWT Implementation
-- Access tokens (7 days default).
-- Refresh tokens (30 days default).
-- Automatic token refresh.
-- Secure password hashing with bcrypt.
-
-### Role-based Access Control
-- **Admin**: Full system access.
-- **Manager**: Course allocation management, activity monitoring.
-- **Facilitator**: View assigned courses, submit activity logs.
-- **Student**: Access reflection page, view own information.
-
-## 📡 API Endpoints
-
-### Authentication
-```plaintext
-POST /api/auth/register     - Register new user
-POST /api/auth/login        - User login
-POST /api/auth/refresh      - Refresh access token
-POST /api/auth/logout       - User logout
-GET  /api/auth/profile      - Get user profile
-PUT  /api/auth/profile      - Update profile
-POST /api/auth/change-password - Change password
-```
-
-### Course Management
-```plaintext
-GET    /api/courses         - Get course offerings (with filters)
-POST   /api/courses         - Create course offering (Manager only)
-GET    /api/courses/:id     - Get course offering details
-PUT    /api/courses/:id     - Update course offering (Manager only)
-DELETE /api/courses/:id     - Delete course offering (Manager only)
-GET    /api/courses/my-courses - Get facilitator's assigned courses
-POST   /api/courses/:id/assign-facilitator - Assign facilitator
-```
-
-### Activity Tracking
-```plaintext
-GET    /api/activities      - Get activity logs (with filters)
-POST   /api/activities      - Submit activity log (Facilitator only)
-GET    /api/activities/:id  - Get activity log details
-PUT    /api/activities/:id  - Update activity log
-DELETE /api/activities/:id  - Delete activity log (Manager only)
-GET    /api/activities/my-logs - Get facilitator's own logs
-GET    /api/activities/summary - Get weekly summary (Manager only)
-```
-
-### User Management
-```plaintext
-GET    /api/users           - Get all users (Admin only)
-GET    /api/users/:id       - Get user by ID
-PUT    /api/users/:id       - Update user (Admin only)
-DELETE /api/users/:id       - Delete user (Admin only)
-GET    /api/users/facilitators - Get all facilitators
-GET    /api/users/students  - Get all students
-GET    /api/users/stats     - Get user statistics
-```
-
-## 🔔 Notification System
-
-### Redis Queues
-- **Notifications Queue**: Email notifications and alerts.
-- **Reminders Queue**: Scheduled activity log reminders.
-
-### Automated Notifications
-- **Activity Reminders**: Sent to facilitators for missing logs.
-- **Manager Alerts**: Notifications for submissions and missed deadlines.
-- **Deadline Monitoring**: Automated tracking with escalating alerts.
-
-### Email Templates
-- Activity log reminders.
-- Manager alerts for missing submissions.
-- Course allocation updates.
-- System notifications.
-
-## 🧪 Testing
-
-### Test Coverage
-- Unit tests for models and utilities.
-- Integration tests for API endpoints.
-- Authentication and authorization tests.
-- Database relationship tests.
-
-### Running Tests
-```bash
-# Run all tests
-npm test
-
-# Run tests with coverage
-npm test -- --coverage
-
-# Run tests in watch mode
-npm run test:watch
-
-# Run specific test file
-npm test -- tests/unit/models/User.test.js
-```
-
-## 🌐 Student Reflection Page
-
-### Features
-- **Language Switching**: Dynamic English/French translation.
-- **Auto-save**: Automatic saving to localStorage.
-- **Form Validation**: Client-side validation with feedback.
-- **Responsive Design**: Mobile-friendly interface.
-
-### Deployment to GitHub Pages
-1. Create a new repository for the reflection page.
-2. Copy contents of the `public/` folder.
-3. Enable GitHub Pages in repository settings.
-4. Access at: `https://yourusername.github.io/repository-name`.
-
-### Local Testing
-```bash
-# Serve the public folder locally
-npx http-server public -p 8080
-```
-
-## 📊 API Documentation
-
-Interactive API documentation is available at:
-- Development: `http://localhost:3000/api-docs`
-- Swagger JSON: `http://localhost:3000/api-docs.json`
-
-## 🚀 Deployment
-
-### Production Checklist
-- [ ] Set `NODE_ENV=production`
-- [ ] Configure production database
-- [ ] Set up Redis instance
-- [ ] Configure email service
-- [ ] Set up SSL certificates
-- [ ] Configure reverse proxy (Nginx/Apache)
-- [ ] Set up monitoring and logging
-- [ ] Configure firewall rules
-
-### Using PM2
-```bash
-# Install PM2
-npm install -g pm2
-
-# Start application
-pm2 start server.js --name course-management
-
-# Start notification worker
-pm2 start src/workers/notificationWorker.js --name notification-worker
-
-# Save PM2 configuration
-pm2 save
-pm2 startup
-```
-
-## 📈 Monitoring & Logging
-
-### Winston Logging
-- Structured JSON logging.
-- Multiple log levels (error, warn, info, debug).
-- File rotation in production.
-- Console output in development.
-
-### Health Check
-```bash
-GET /health
-```
-
-## 🔒 Security Features
-
-- **Password Security**: bcrypt hashing with salt rounds.
-- **JWT Security**: Signed tokens with expiration.
-- **Rate Limiting**: Configurable request limits.
-- **Input Validation**: Comprehensive validation with express-validator.
-- **SQL Injection Prevention**: Parameterized queries with Sequelize.
-- **XSS Protection**: Helmet middleware.
-- **CORS Configuration**: Configurable cross-origin requests.
-
-## 🤝 Contributing
-
-1. Fork the repository.
-2. Create a feature branch (`git checkout -b feature/amazing-feature`).
-3. Commit your changes (`git commit -m 'Add amazing feature'`).
-4. Push to the branch (`git push origin feature/amazing-feature`).
-5. Open a Pull Request.
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🆘 Support
-
-For support and questions:
-- Create an issue on GitHub.
-- Email: support@coursemanagement.edu.
-- Documentation: Available in the `/docs` folder.
-
-## 🎯 Project Status
-
-✅ **Completed Features:**
-- Authentication system with JWT.
-- Role-based access control.
-- Course allocation management.
-- Activity tracking system.
-- Redis notification system.
-- Multilingual reflection page.
-- Comprehensive API documentation.
-- Unit and integration tests.
-- Production-ready deployment configuration.
-
-🔄 **Ongoing Improvements:**
-- Performance optimization.
-- Enhanced error handling.
-- Additional test coverage.
-- Advanced reporting features.
-
----
-
-**Author** 
-Plamedi Mayala.
 ```
 
 
 /* ========== server.js ========== */
 ```javascript
 require("dotenv").config()
+const validateEnvironment = require('./src/config/validateEnv');
+validateEnvironment();
 const app = require("./src/app")
 const { sequelize } = require("./src/models")
 const logger = require("./src/utils/logger")
@@ -2796,6 +2482,13 @@ app.use('/api/', limiter);
 // Body parsing middleware
 app.use(bodyParser.json({ limit: '10mb' }));
 app.use(bodyParser.urlencoded({ extended: true, limit: '10mb' }));
+
+// Add request ID for tracking
+app.use((req, res, next) => {
+  req.id = require('crypto').randomUUID();
+  res.setHeader('X-Request-ID', req.id);
+  next();
+});
 
 // Logging middleware
 if (process.env.NODE_ENV !== 'test') {
@@ -2980,7 +2673,7 @@ module.exports = {
   test: {
     username: process.env.DB_USER || 'root',
     password: process.env.DB_PASSWORD || '',
-    database: process.env.DB_NAME + '_test' || 'course_management_db_test',
+    database: (process.env.DB_NAME || 'course_management_db') + '_test',
     host: process.env.DB_HOST || 'localhost',
     port: process.env.DB_PORT || 3306,
     dialect: 'mysql',
@@ -3404,6 +3097,43 @@ const options = {
 const swaggerSpec = swaggerJsdoc(options);
 
 module.exports = swaggerSpec;
+```
+
+
+/* ========== src\config\validateEnv.js ========== */
+```javascript
+const logger = require('../utils/logger');
+
+const requiredEnvVars = [
+  'JWT_SECRET',
+  'JWT_REFRESH_SECRET'
+];
+
+const validateEnvironment = () => {
+  const missing = [];
+  
+  requiredEnvVars.forEach(envVar => {
+    if (!process.env[envVar]) {
+      missing.push(envVar);
+    }
+  });
+  
+  if (missing.length > 0) {
+    logger.error(`Missing required environment variables: ${missing.join(', ')}`);
+    logger.error('Please check your .env file and ensure all required variables are set.');
+    process.exit(1);
+  }
+  
+  // Validate JWT secrets are not default values
+  if (process.env.JWT_SECRET === 'your-secret-key' || process.env.JWT_SECRET?.length < 32) {
+    logger.error('JWT_SECRET must be a strong secret (at least 32 characters)');
+    process.exit(1);
+  }
+  
+  logger.info('Environment validation passed');
+};
+
+module.exports = validateEnvironment;
 ```
 
 
@@ -4484,6 +4214,7 @@ const jwt = require('jsonwebtoken');
 const { User } = require('../models');
 const logger = require('../utils/logger');
 
+// Update the authenticate function:
 const authenticate = async (req, res, next) => {
   try {
     const token = req.header('Authorization')?.replace('Bearer ', '');
@@ -4492,6 +4223,15 @@ const authenticate = async (req, res, next) => {
       return res.status(401).json({
         error: 'Authentication required',
         message: 'Please provide a valid authentication token'
+      });
+    }
+
+    // Validate JWT secret is configured
+    if (!process.env.JWT_SECRET) {
+      logger.error('JWT_SECRET not configured');
+      return res.status(500).json({ 
+        error: 'Server configuration error',
+        message: 'Authentication system not properly configured'
       });
     }
 
@@ -4505,7 +4245,7 @@ const authenticate = async (req, res, next) => {
     });
 
     if (!user) {
-      throw new Error('User not found');
+      throw new Error('User not found or inactive');
     }
 
     // Update last login
@@ -4539,6 +4279,7 @@ const authenticate = async (req, res, next) => {
     });
   }
 };
+
 
 const authorize = (...roles) => {
   return (req, res, next) => {
@@ -4594,14 +4335,16 @@ module.exports = {
 const logger = require('../utils/logger');
 
 const errorHandler = (err, req, res, next) => {
-  // Log error
+  // Log error with request context
   logger.error('Error:', {
+    requestId: req.id,
     message: err.message,
     stack: err.stack,
     url: req.originalUrl,
     method: req.method,
     ip: req.ip,
-    user: req.user?.id
+    user: req.user?.id,
+    body: req.method === 'POST' || req.method === 'PUT' ? req.body : undefined
   });
 
   // Default error
@@ -5187,7 +4930,7 @@ module.exports = (sequelize) => {
     paranoid: true,
     indexes: [
       {
-        name: 'activity_unique_idx', // Shortened name
+        name: 'activity_unique_idx',
         unique: true,
         fields: ['allocation_id', 'week_number']
       },
@@ -5196,22 +4939,32 @@ module.exports = (sequelize) => {
       },
       {
         fields: ['submitted_at']
+      },
+      // Add composite index for common filtering queries
+      {
+        name: 'activity_status_week_idx',
+        fields: ['week_number', 'submitted_at']
+      },
+      // Add index for facilitator queries
+      {
+        name: 'activity_allocation_week_idx',
+        fields: ['allocation_id', 'week_number', 'submitted_at']
       }
     ]
   });
 
   // Instance methods
-  ActivityTracker.prototype.isComplete = function() {
+  ActivityTracker.prototype.isComplete = function () {
     return this.formativeOneGrading === 'Done' &&
-           this.formativeTwoGrading === 'Done' &&
-           this.summativeGrading === 'Done' &&
-           this.courseModeration === 'Done' &&
-           this.intranetSync === 'Done' &&
-           this.gradeBookStatus === 'Done' &&
-           this.attendance.length > 0;
+      this.formativeTwoGrading === 'Done' &&
+      this.summativeGrading === 'Done' &&
+      this.courseModeration === 'Done' &&
+      this.intranetSync === 'Done' &&
+      this.gradeBookStatus === 'Done' &&
+      this.attendance.length > 0;
   };
 
-  ActivityTracker.prototype.getCompletionPercentage = function() {
+  ActivityTracker.prototype.getCompletionPercentage = function () {
     const statuses = [
       this.formativeOneGrading,
       this.formativeTwoGrading,
@@ -5220,19 +4973,19 @@ module.exports = (sequelize) => {
       this.intranetSync,
       this.gradeBookStatus
     ];
-    
+
     const completed = statuses.filter(status => status === 'Done').length;
     const hasAttendance = this.attendance.length > 0 ? 1 : 0;
-    
+
     return Math.round(((completed + hasAttendance) / 7) * 100);
   };
 
-  ActivityTracker.prototype.markSubmitted = async function() {
+  ActivityTracker.prototype.markSubmitted = async function () {
     this.submittedAt = new Date();
     await this.save();
   };
 
-  ActivityTracker.prototype.incrementReminderCount = async function() {
+  ActivityTracker.prototype.incrementReminderCount = async function () {
     this.reminderCount += 1;
     this.lastReminderSent = new Date();
     await this.save();
@@ -8350,41 +8103,51 @@ class CourseService {
     }
   }
   
-  async assignFacilitator(courseOfferingId, facilitatorId) {
-    try {
-      const courseOffering = await CourseOffering.findByPk(courseOfferingId);
-      
-      if (!courseOffering) {
-        throw new Error('Course offering not found');
-      }
-      
-      const facilitator = await Facilitator.findByPk(facilitatorId);
-      
-      if (!facilitator) {
-        throw new Error('Facilitator not found');
-      }
-      
-      if (!facilitator.canTakeMoreCourses()) {
-        throw new Error('Facilitator has reached maximum course load');
-      }
-      
-      // Update facilitator assignment
-      const oldFacilitatorId = courseOffering.facilitatorId;
-      courseOffering.facilitatorId = facilitatorId;
-      await courseOffering.save();
-      
-      // Update course loads
-      if (oldFacilitatorId) {
-        await this.updateFacilitatorLoad(oldFacilitatorId, -1);
-      }
-      await this.updateFacilitatorLoad(facilitatorId, 1);
-      
-      return this.getCourseOfferingById(courseOfferingId);
-    } catch (error) {
-      logger.error('Assign facilitator error:', error);
-      throw error;
+// Update the assignFacilitator method:
+async assignFacilitator(courseOfferingId, facilitatorId) {
+  const transaction = await sequelize.transaction();
+  
+  try {
+    const courseOffering = await CourseOffering.findByPk(courseOfferingId, { transaction });
+    
+    if (!courseOffering) {
+      throw new Error('Course offering not found');
     }
+    
+    const facilitator = await Facilitator.findByPk(facilitatorId, { transaction });
+    
+    if (!facilitator) {
+      throw new Error('Facilitator not found');
+    }
+    
+    if (!facilitator.isAvailable) {
+      throw new Error('Facilitator is not available');
+    }
+    
+    if (!facilitator.canTakeMoreCourses()) {
+      throw new Error(`Facilitator has reached maximum course load (${facilitator.maxCourseLoad})`);
+    }
+    
+    // Update facilitator assignment
+    const oldFacilitatorId = courseOffering.facilitatorId;
+    courseOffering.facilitatorId = facilitatorId;
+    await courseOffering.save({ transaction });
+    
+    // Update course loads
+    if (oldFacilitatorId && oldFacilitatorId !== facilitatorId) {
+      await this.updateFacilitatorLoad(oldFacilitatorId, -1, transaction);
+    }
+    await this.updateFacilitatorLoad(facilitatorId, 1, transaction);
+    
+    await transaction.commit();
+    
+    return this.getCourseOfferingById(courseOfferingId);
+  } catch (error) {
+    await transaction.rollback();
+    logger.error('Assign facilitator error:', error);
+    throw error;
   }
+}
   
   async getFacilitatorCourses(facilitatorId) {
     try {

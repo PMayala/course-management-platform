@@ -1,185 +1,356 @@
 # Course Management Platform Backend Service
 
-A comprehensive backend system for academic institutions to manage course allocations, track facilitator activities, and monitor student progress with multilingual support.
+A comprehensive backend system for academic institutions to manage course allocations, track facilitator activities, and enhance academic coordination with role-based access control and automated notifications.
+
+## 🎯 Project Overview
+
+This backend system supports three core modules:
+- **Course Allocation System** - Manage facilitator assignments to courses
+- **Facilitator Activity Tracker (FAT)** - Track weekly activities and automate compliance monitoring
+- **Student Reflection Page** - Multilingual interface with i18n/l10n support
 
 ## 🚀 Features
 
-### Module 1: Course Allocation System
-- **Role-based Access Control**: Managers can create/update course allocations; Facilitators can view assigned courses.
-- **CRUD Operations**: Complete management of course offerings with filtering capabilities.
-- **Smart Assignment**: Automatic tracking of facilitator workload and capacity management.
-- **Advanced Filtering**: Filter by trimester, cohort, intake period, facilitator, and delivery mode.
+### Core Functionality
+- ✅ JWT-based authentication with role management (Admin, Manager, Facilitator, Student)
+- ✅ Comprehensive CRUD operations for all entities
+- ✅ Redis-backed notification system with background workers
+- ✅ Multilingual student reflection page (English/French)
+- ✅ RESTful API design with comprehensive validation
+- ✅ Real-time activity tracking and automated reminders
 
-### Module 2: Facilitator Activity Tracker (FAT)
-- **Weekly Activity Logs**: Comprehensive tracking of attendance, grading, and administrative tasks.
-- **Redis-based Notifications**: Automated reminders and alerts for missing submissions.
-- **Real-time Monitoring**: Managers can monitor submission status and completion rates.
-- **Deadline Management**: Automated tracking of deadlines with escalating notifications.
-
-### Module 3: Student Reflection Page (i18n/l10n)
-- **Multilingual Support**: English and French language switching.
-- **Local Storage**: Auto-save functionality and language preference persistence.
-- **Responsive Design**: Mobile-friendly interface.
-- **GitHub Pages Ready**: Easy deployment to GitHub Pages.
-
-## 🛠 Technology Stack
-
-- **Backend**: Node.js, Express.js
+### Technical Highlights
 - **Database**: MySQL with Sequelize ORM
-- **Authentication**: JWT with refresh tokens
-- **Message Queue**: Redis with Bull
-- **API Documentation**: Swagger/OpenAPI 3.0
-- **Testing**: Jest with comprehensive coverage
-- **Security**: bcrypt, helmet, CORS, rate limiting
-- **Logging**: Winston with structured logging
-- **Frontend**: Vanilla HTML, CSS, JavaScript (for reflection page)
+- **Authentication**: JWT tokens with bcrypt password hashing
+- **Queuing**: Redis-based notification system
+- **Documentation**: Swagger/OpenAPI integration
+- **Testing**: Jest unit tests for models and utilities
+- **Deployment**: Github Pages
 
 ## 📋 Prerequisites
 
-- Node.js (v16.0.0 or higher)
-- npm (v8.0.0 or higher)
-- MySQL (v8.0 or higher)
-- Redis (v6.0 or higher)
-- Git
+- Node.js (≥16.0.0)
+- MySQL (≥8.0)
+- Redis (≥6.0)
+- npm or yarn
 
-## 🔧 Installation
+## 🛠️ Installation & Setup
 
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/yourusername/course-management-platform.git
-   cd course-management-platform
-   ```
+### 1. Clone the Repository
+```bash
+git clone <repository-url>
+cd course-management-platform
+```
 
-2. **Install dependencies**
-   ```bash
-   npm install
-   ```
+### 2. Install Dependencies
+```bash
+npm install
+```
 
-3. **Environment setup**
-   ```bash
-   cp .env.example .env
-   # Edit .env with your configuration
-   ```
+### 3. Environment Configuration
+Create a `.env` file in the root directory:
 
-4. **Database setup**
-   ```sql
-   CREATE DATABASE course_management_db;
-   CREATE DATABASE course_management_db_test;
-   ```
+```env
+# Database Configuration
+DB_HOST=localhost
+DB_PORT=3306
+DB_NAME=course_management_db
+DB_USER=root
+DB_PASSWORD=your_password
 
-5. **Start the application**
-   ```bash
-   # Development mode
-   npm run dev
+# JWT Configuration
+JWT_SECRET=your-super-secure-jwt-secret-key-min-32-chars
+JWT_REFRESH_SECRET=your-super-secure-refresh-secret-key
+JWT_EXPIRE=7d
+JWT_REFRESH_EXPIRE=30d
 
-   # Production mode
-   npm start
+# Redis Configuration
+REDIS_HOST=localhost
+REDIS_PORT=6379
+REDIS_PASSWORD=
 
-   # Run notification worker (in a separate terminal)
-   npm run worker
-   ```
+# Email Configuration (for notifications)
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_USER=your-email@gmail.com
+EMAIL_PASSWORD=your-app-password
 
-## 🗄️ Database Schema
+# Application Configuration
+PORT=3000
+NODE_ENV=development
+APP_NAME=Course Management Platform
+APP_URL=http://localhost:3000
+FRONTEND_URL=http://localhost:3001
 
-### Core Entities
-- **Users**: Base authentication with role-based access.
-- **Managers**: Course allocation management capabilities.
-- **Facilitators**: Course delivery and activity tracking.
-- **Students**: Enrollment and progress tracking.
-- **Modules**: Course subjects and curriculum.
-- **CourseOfferings**: Specific course instances.
-- **ActivityTrackers**: Weekly facilitator activity logs.
+# Rate Limiting
+RATE_LIMIT_WINDOW_MS=900000
+RATE_LIMIT_MAX_REQUESTS=100
+
+# Notification Settings
+NOTIFICATION_DEADLINE_HOURS=48
+REMINDER_CRON_SCHEDULE=0 9 * * MON
+```
+
+### 4. Database Setup
+```bash
+# Sync database models
+npm run migrate
+
+# Seed with sample data (optional)
+npm run seed
+```
+
+### 5. Start the Application
+```bash
+# Development mode
+npm run dev
+
+# Production mode
+npm start
+
+# Start notification worker (separate terminal)
+npm run worker
+```
+
+## 📖 Database Schema
+
+### Core Models
+
+#### Users & Roles
+- **User**: Base user model with authentication
+- **Manager**: Academic managers (assign facilitators)
+- **Facilitator**: Course instructors
+- **Student**: Course participants
+
+#### Course Management
+- **Module**: Academic subjects/courses
+- **Class**: Academic periods (e.g., "2025S", "2025F")
+- **Cohort**: Student groups by program
+- **Mode**: Delivery methods (Online, In-person, Hybrid)
+- **CourseOffering**: Specific course instances
+
+#### Activity Tracking
+- **ActivityTracker**: Weekly facilitator activity logs
 
 ### Key Relationships
-- Users have role-specific profiles (Manager/Facilitator/Student).
-- CourseOfferings link Modules, Classes, Cohorts, and Facilitators.
-- ActivityTrackers belong to CourseOfferings.
-- Students belong to Cohorts.
-
-## 🔐 Authentication & Authorization
-
-### JWT Implementation
-- Access tokens (7 days default).
-- Refresh tokens (30 days default).
-- Automatic token refresh.
-- Secure password hashing with bcrypt.
-
-### Role-based Access Control
-- **Admin**: Full system access.
-- **Manager**: Course allocation management, activity monitoring.
-- **Facilitator**: View assigned courses, submit activity logs.
-- **Student**: Access reflection page, view own information.
-
-## 📡 API Endpoints
-
-### Authentication
-```plaintext
-POST /api/auth/register     - Register new user
-POST /api/auth/login        - User login
-POST /api/auth/refresh      - Refresh access token
-POST /api/auth/logout       - User logout
-GET  /api/auth/profile      - Get user profile
-PUT  /api/auth/profile      - Update profile
-POST /api/auth/change-password - Change password
+```
+User (1:1) → Manager/Facilitator/Student
+CourseOffering (N:1) → Module, Class, Cohort, Facilitator, Mode
+ActivityTracker (N:1) → CourseOffering
+Student (N:1) → Cohort
 ```
 
-### Course Management
-```plaintext
-GET    /api/courses         - Get course offerings (with filters)
-POST   /api/courses         - Create course offering (Manager only)
-GET    /api/courses/:id     - Get course offering details
-PUT    /api/courses/:id     - Update course offering (Manager only)
-DELETE /api/courses/:id     - Delete course offering (Manager only)
-GET    /api/courses/my-courses - Get facilitator's assigned courses
-POST   /api/courses/:id/assign-facilitator - Assign facilitator
+## 🔐 Authentication Flow
+
+### 1. User Registration
+```http
+POST /api/auth/register
+Content-Type: application/json
+
+{
+  "email": "john.doe@university.edu",
+  "password": "SecurePass123!",
+  "firstName": "John",
+  "lastName": "Doe",
+  "role": "facilitator",
+  "employeeId": "EMP001",
+  "department": "Computer Science",
+  "specialization": "Software Development"
+}
 ```
 
-### Activity Tracking
-```plaintext
-GET    /api/activities      - Get activity logs (with filters)
-POST   /api/activities      - Submit activity log (Facilitator only)
-GET    /api/activities/:id  - Get activity log details
-PUT    /api/activities/:id  - Update activity log
-DELETE /api/activities/:id  - Delete activity log (Manager only)
-GET    /api/activities/my-logs - Get facilitator's own logs
-GET    /api/activities/summary - Get weekly summary (Manager only)
+### 2. User Login
+```http
+POST /api/auth/login
+Content-Type: application/json
+
+{
+  "email": "john.doe@university.edu",
+  "password": "SecurePass123!"
+}
 ```
 
-### User Management
-```plaintext
-GET    /api/users           - Get all users (Admin only)
-GET    /api/users/:id       - Get user by ID
-PUT    /api/users/:id       - Update user (Admin only)
-DELETE /api/users/:id       - Delete user (Admin only)
-GET    /api/users/facilitators - Get all facilitators
-GET    /api/users/students  - Get all students
-GET    /api/users/stats     - Get user statistics
+**Response:**
+```json
+{
+  "message": "Login successful",
+  "user": {
+    "id": 1,
+    "email": "john.doe@university.edu",
+    "firstName": "John",
+    "lastName": "Doe",
+    "role": "facilitator"
+  },
+  "tokens": {
+    "accessToken": "eyJhbGciOiJIUzI1NiIs...",
+    "refreshToken": "eyJhbGciOiJIUzI1NiIs..."
+  }
+}
+```
+
+### 3. Protected Routes
+Include the JWT token in the Authorization header:
+```http
+Authorization: Bearer eyJhbGciOiJIUzI1NiIs...
+```
+
+## 📚 API Documentation
+
+### Core Endpoints
+
+#### Authentication
+- `POST /api/auth/register` - Register new user
+- `POST /api/auth/login` - User login
+- `POST /api/auth/refresh` - Refresh access token
+- `GET /api/auth/profile` - Get user profile
+- `PUT /api/auth/profile` - Update profile
+- `POST /api/auth/change-password` - Change password
+- `POST /api/auth/logout` - User logout
+
+#### Course Management
+- `GET /api/courses` - List course offerings (with filters)
+- `POST /api/courses` - Create course offering *(Manager only)*
+- `GET /api/courses/:id` - Get course details
+- `PUT /api/courses/:id` - Update course offering *(Manager only)*
+- `DELETE /api/courses/:id` - Delete course offering *(Manager only)*
+- `GET /api/courses/my-courses` - Get facilitator's assigned courses
+- `POST /api/courses/:id/assign-facilitator` - Assign facilitator *(Manager only)*
+
+#### Module Management
+- `GET /api/courses/modules` - List all modules
+- `POST /api/courses/modules` - Create module *(Manager only)*
+
+#### Activity Tracking
+- `GET /api/activities` - List activity logs
+- `POST /api/activities` - Create activity log *(Facilitator only)*
+- `GET /api/activities/:id` - Get activity log details
+- `PUT /api/activities/:id` - Update activity log
+- `DELETE /api/activities/:id` - Delete activity log *(Manager only)*
+- `GET /api/activities/my-logs` - Get facilitator's logs
+- `GET /api/activities/summary` - Weekly summary *(Manager only)*
+
+#### User Management
+- `GET /api/users` - List all users *(Admin only)*
+- `GET /api/users/:id` - Get user details
+- `PUT /api/users/:id` - Update user *(Admin only)*
+- `PATCH /api/users/:id/deactivate` - Deactivate user *(Admin only)*
+- `DELETE /api/users/:id` - Delete user *(Admin only)*
+- `GET /api/users/stats` - User statistics *(Admin only)*
+
+### Sample API Calls
+
+#### Create Course Offering
+```http
+POST /api/courses
+Authorization: Bearer <manager-token>
+Content-Type: application/json
+
+{
+  "moduleId": 1,
+  "classId": 1,
+  "cohortId": 1,
+  "facilitatorId": 1,
+  "modeId": 1,
+  "trimester": 1,
+  "intakePeriod": "HT1",
+  "startDate": "2025-09-01",
+  "endDate": "2025-12-15",
+  "maxStudents": 30
+}
+```
+
+#### Submit Activity Log
+```http
+POST /api/activities
+Authorization: Bearer <facilitator-token>
+Content-Type: application/json
+
+{
+  "allocationId": 1,
+  "weekNumber": 1,
+  "attendance": [true, true, false, true, true],
+  "formativeOneGrading": "Done",
+  "formativeTwoGrading": "Pending",
+  "summativeGrading": "Not Started",
+  "courseModeration": "Done",
+  "intranetSync": "Done",
+  "gradeBookStatus": "Pending",
+  "notes": "Student 3 was absent due to illness"
+}
+```
+
+## 📊 Filtering & Pagination
+
+Most list endpoints support filtering and pagination:
+
+```http
+GET /api/courses?trimester=1&status=active&facilitatorId=1&page=1&limit=10
+GET /api/activities?weekNumber=1&status=complete&page=2&limit=5
+GET /api/users?role=facilitator&isActive=true&search=john
+```
+
+**Pagination Response Format:**
+```json
+{
+  "courseOfferings": [...],
+  "pagination": {
+    "total": 45,
+    "page": 1,
+    "limit": 10,
+    "pages": 5,
+    "hasNext": true,
+    "hasPrev": false
+  }
+}
 ```
 
 ## 🔔 Notification System
 
-### Redis Queues
-- **Notifications Queue**: Email notifications and alerts.
-- **Reminders Queue**: Scheduled activity log reminders.
+### Redis-Backed Queues
+- **Notification Queue**: Handles email notifications
+- **Reminder Queue**: Processes automated reminders
 
-### Automated Notifications
-- **Activity Reminders**: Sent to facilitators for missing logs.
-- **Manager Alerts**: Notifications for submissions and missed deadlines.
-- **Deadline Monitoring**: Automated tracking with escalating alerts.
+### Automated Features
+- **Weekly Reminders**: Sent to facilitators who haven't submitted activity logs
+- **Manager Alerts**: Notifications about missing submissions and deadline violations
+- **Submission Confirmations**: Automatic alerts when activity logs are completed
 
-### Email Templates
-- Activity log reminders.
-- Manager alerts for missing submissions.
-- Course allocation updates.
-- System notifications.
+### Background Worker
+Start the notification worker separately:
+```bash
+npm run worker
+```
+
+## 🌍 Internationalization (i18n)
+
+### Student Reflection Page
+The multilingual reflection page is available at `/reflection` and supports:
+- **English** (default)
+- **French** (Français)
+
+### Features
+- Dynamic language switching
+- Persistent language preference (localStorage)
+- Browser language detection
+- Form auto-save functionality
+
+### Translation Structure
+```javascript
+const translations = {
+  en: {
+    pageTitle: "Course Reflection",
+    question1: "What did you enjoy most about the course?",
+    // ...
+  },
+  fr: {
+    pageTitle: "Réflexion sur le cours",
+    question1: "Qu'avez-vous le plus apprécié dans ce cours ?",
+    // ...
+  }
+};
+```
 
 ## 🧪 Testing
-
-### Test Coverage
-- Unit tests for models and utilities.
-- Integration tests for API endpoints.
-- Authentication and authorization tests.
-- Database relationship tests.
 
 ### Running Tests
 ```bash
@@ -187,131 +358,183 @@ GET    /api/users/stats     - Get user statistics
 npm test
 
 # Run tests with coverage
-npm test -- --coverage
+npm run test:coverage
 
 # Run tests in watch mode
 npm run test:watch
-
-# Run specific test file
-npm test -- tests/unit/models/User.test.js
 ```
 
-## 🌐 Student Reflection Page
+### Test Coverage
+- **Model Tests**: User, CourseOffering, ActivityTracker validation
+- **Utility Tests**: Helper functions, validators, formatters
+- **Integration Tests**: Authentication, course allocation, activity tracking
+- **API Tests**: Complete endpoint testing with role verification
 
-### Features
-- **Language Switching**: Dynamic English/French translation.
-- **Auto-save**: Automatic saving to localStorage.
-- **Form Validation**: Client-side validation with feedback.
-- **Responsive Design**: Mobile-friendly interface.
-
-### Deployment to GitHub Pages
-1. Create a new repository for the reflection page.
-2. Copy contents of the `public/` folder.
-3. Enable GitHub Pages in repository settings.
-4. Access at: `https://yourusername.github.io/repository-name`.
-
-### Local Testing
+### Sample Test Data
+The system includes comprehensive test fixtures and database seeding:
 ```bash
-# Serve the public folder locally
-npx http-server public -p 8080
+# Seed development database
+npm run seed
 ```
 
-## 📊 API Documentation
+**Default Test Credentials:**
+- **Admin**: `admin@university.edu` / `Admin123!`
+- **Manager**: `sarah.johnson@university.edu` / `Manager123!`
+- **Facilitator**: `john.doe@university.edu` / `Facilitator123!`
+- **Student**: `student1@university.edu` / `Student123!`
 
-Interactive API documentation is available at:
-- Development: `http://localhost:3000/api-docs`
-- Swagger JSON: `http://localhost:3000/api-docs.json`
+## 📝 Validation & Error Handling
 
-## 🚀 Deployment
+### Input Validation
+- **Email Format**: RFC-compliant email validation
+- **Password Strength**: Minimum 8 characters with complexity requirements
+- **Role Validation**: Enum-based role checking
+- **Date Validation**: Proper date range validation
+- **Array Validation**: Type-safe attendance arrays
 
-### Production Checklist
-- [ ] Set `NODE_ENV=production`
-- [ ] Configure production database
-- [ ] Set up Redis instance
-- [ ] Configure email service
-- [ ] Set up SSL certificates
-- [ ] Configure reverse proxy (Nginx/Apache)
-- [ ] Set up monitoring and logging
-- [ ] Configure firewall rules
-
-### Using PM2
-```bash
-# Install PM2
-npm install -g pm2
-
-# Start application
-pm2 start server.js --name course-management
-
-# Start notification worker
-pm2 start src/workers/notificationWorker.js --name notification-worker
-
-# Save PM2 configuration
-pm2 save
-pm2 startup
+### Error Response Format
+```json
+{
+  "error": "Validation failed",
+  "message": "Invalid input data",
+  "errors": [
+    {
+      "field": "email",
+      "message": "Please provide a valid email address"
+    }
+  ]
+}
 ```
 
-## 📈 Monitoring & Logging
+### HTTP Status Codes
+- `200` - Success
+- `201` - Created
+- `400` - Bad Request / Validation Error
+- `401` - Unauthorized
+- `403` - Forbidden / Insufficient Permissions
+- `404` - Not Found
+- `409` - Conflict / Duplicate Entry
+- `500` - Internal Server Error
 
-### Winston Logging
-- Structured JSON logging.
-- Multiple log levels (error, warn, info, debug).
-- File rotation in production.
-- Console output in development.
+## 🛡️ Security Features
 
-### Health Check
-```bash
-GET /health
+### Authentication & Authorization
+- **JWT Tokens**: Secure token-based authentication
+- **Role-Based Access Control**: Granular permissions by user role
+- **Password Hashing**: bcrypt with configurable salt rounds
+- **Token Refresh**: Automatic token renewal mechanism
+
+### Security Middleware
+- **Helmet**: Security headers protection
+- **CORS**: Cross-origin resource sharing configuration
+- **Rate Limiting**: Request throttling per IP
+- **Input Sanitization**: XSS and injection prevention
+- **Parameterized Queries**: SQL injection protection
+
+### Environment Security
+```env
+# Strong JWT secrets (minimum 32 characters)
+JWT_SECRET=your-super-secure-jwt-secret-key-min-32-chars
+JWT_REFRESH_SECRET=your-super-secure-refresh-secret-key
+
+# Database credentials
+DB_PASSWORD=strong-database-password
+
+# Email credentials
+EMAIL_PASSWORD=app-specific-password
 ```
 
-## 🔒 Security Features
 
-- **Password Security**: bcrypt hashing with salt rounds.
-- **JWT Security**: Signed tokens with expiration.
-- **Rate Limiting**: Configurable request limits.
-- **Input Validation**: Comprehensive validation with express-validator.
-- **SQL Injection Prevention**: Parameterized queries with Sequelize.
-- **XSS Protection**: Helmet middleware.
-- **CORS Configuration**: Configurable cross-origin requests.
+### Environment-Specific Configurations
+- **Development**: Full logging, auto-reload, seed data
+- **Production**: Optimized logging, error tracking, health checks
+- **Testing**: Isolated database, mocked external services
+
+## 📊 Monitoring & Health Checks
+
+### Health Endpoints
+- `GET /health` - Basic application health
+- `GET /api/monitoring/redis` - Redis connection status
+- `GET /api/monitoring/mysql` - Database connection status
+- `GET /api/monitoring/status` - Complete system status
+
+### Logging
+- **Winston Logger**: Structured logging with multiple transports
+- **Request Logging**: Morgan middleware for HTTP request logs
+- **Error Tracking**: Comprehensive error logging with stack traces
+- **Performance Monitoring**: Response time tracking
 
 ## 🤝 Contributing
 
-1. Fork the repository.
-2. Create a feature branch (`git checkout -b feature/amazing-feature`).
-3. Commit your changes (`git commit -m 'Add amazing feature'`).
-4. Push to the branch (`git push origin feature/amazing-feature`).
-5. Open a Pull Request.
+### Code Standards
+- **ESLint**: Code linting and formatting
+- **Prettier**: Code formatting
+- **Conventional Commits**: Standardized commit messages
+- **Documentation**: Comprehensive JSDoc comments
+
+### Development Workflow
+1. Fork the repository
+2. Create a feature branch
+3. Make changes with tests
+4. Run linting and tests
+5. Submit a pull request
 
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🆘 Support
+## 🆘 Support & Troubleshooting
 
-For support and questions:
-- Create an issue on GitHub.
-- Email: support@coursemanagement.edu.
-- Documentation: Available in the `/docs` folder.
+### Common Issues
 
-## 🎯 Project Status
+#### Database Connection
+```bash
+# Check MySQL service
+mysql -u root -p -e "SELECT 1"
 
-✅ **Completed Features:**
-- Authentication system with JWT.
-- Role-based access control.
-- Course allocation management.
-- Activity tracking system.
-- Redis notification system.
-- Multilingual reflection page.
-- Comprehensive API documentation.
-- Unit and integration tests.
-- Production-ready deployment configuration.
+# Verify database exists
+mysql -u root -p -e "SHOW DATABASES LIKE 'course_management_db'"
+```
 
-🔄 **Ongoing Improvements:**
-- Performance optimization.
-- Enhanced error handling.
-- Additional test coverage.
-- Advanced reporting features.
+#### Redis Connection
+```bash
+# Test Redis connection
+redis-cli ping
+```
+
+#### Port Conflicts
+```bash
+# Check if port 3000 is in use
+lsof -i :3000
+
+# Use different port
+PORT=3001 npm start
+```
+
+### Development Commands
+```bash
+# Database operations
+npm run migrate          # Run database migrations
+npm run migrate:undo     # Undo last migration
+npm run seed            # Seed database with sample data
+
+# Development tools
+npm run lint            # Run ESLint
+npm run lint:fix        # Fix ESLint issues
+npm run dev             # Start with nodemon
+npm run worker          # Start background worker
+
+# Testing
+npm test                # Run all tests
+npm run test:watch      # Watch mode
+npm run test:coverage   # Coverage report
+```
+
+## 📞 Contact & Support
+
+For questions, issues, or contributions:
+- **GitHub Issues**: Use the repository issues page
+- **Documentation**: Check the `/api-docs` endpoint when running
+- **Email**: p.mayala@alustudent.com
 
 ---
-
-**Author** 
-Plamedi Mayala.
