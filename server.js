@@ -1,112 +1,86 @@
-const express = require("express")
-const cors = require("cors")
-const helmet = require("helmet")
-const rateLimit = require("express-rate-limit")
-const path = require("path")
 require("dotenv").config()
-
-const { sequelize } = require("./models")
-const authRoutes = require("./routes/auth")
-const courseRoutes = require("./routes/courses")
-const facilitatorRoutes = require("./routes/facilitators")
-const activityRoutes = require("./routes/activities")
-const uploadRoutes = require("./routes/uploads")
-const { setupSwagger } = require("./config/swagger")
-const { startNotificationWorker } = require("./services/notificationService")
-
-const app = express()
-
-// Security middleware
-app.use(helmet())
-app.use(
-  cors({
-    origin: process.env.NODE_ENV === "production" ? "your-domain.com" : "*",
-    credentials: true,
-  }),
-)
-
-// Rate limiting
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
-  message: {
-    success: false,
-    message: "Too many requests from this IP, please try again later.",
-  },
-})
-app.use(limiter)
-
-// Body parsing middleware
-app.use(express.json({ limit: "10mb" }))
-app.use(express.urlencoded({ extended: true }))
-
-// Serve static files from uploads directory
-app.use("/uploads", express.static(path.join(__dirname, "uploads")))
-
-// Setup Swagger documentation
-setupSwagger(app)
-
-// Health check endpoint
-app.get("/health", (req, res) => {
-  res.json({
-    success: true,
-    message: "Course Management Platform API is running",
-    timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV,
-  })
-})
-
-// API Routes
-app.use("/api/auth", authRoutes)
-app.use("/api/courses", courseRoutes)
-app.use("/api/facilitators", facilitatorRoutes)
-app.use("/api/activities", activityRoutes)
-app.use("/api/uploads", uploadRoutes)
-
-// Error handling middleware
-app.use((error, req, res, next) => {
-  console.error("Error:", error)
-  res.status(error.status || 500).json({
-    success: false,
-    message: error.message || "Internal server error",
-    ...(process.env.NODE_ENV === "development" && { stack: error.stack }),
-  })
-})
-
-// 404 handler
-app.use("*", (req, res) => {
-  res.status(404).json({
-    success: false,
-    message: "Route not found",
-    path: req.originalUrl,
-  })
-})
+const app = require("./src/app")
+const { sequelize } = require("./src/models")
+const logger = require("./src/utils/logger")
+const cron = require("cron")
+const notificationService = require("./src/services/notificationService")
 
 const PORT = process.env.PORT || 3000
 
+// Test database connection and sync models
 async function startServer() {
   try {
     // Test database connection
     await sequelize.authenticate()
-    console.log("✅ Database connected successfully")
+    logger.info("Database connection established successfully.")
 
-    // Sync database models
-    await sequelize.sync({ alter: true })
-    console.log("✅ Database synchronized")
+    // Sync database models (use migrations in production)
+    if (process.env.NODE_ENV !== "production") {
+      await sequelize.sync({ alter: true })
+      logger.info("Database models synchronized.")
+    }
 
-    // Start notification worker
-    startNotificationWorker()
+    // Start cron job for reminders
+    const reminderJob = new cron.CronJob(
+      process.env.REMINDER_CRON_SCHEDULE || "0 9 * * MON",
+      async () => {
+        logger.info("Running scheduled reminder check...")
+        try {
+          await notificationService.checkAndSendReminders()
+        } catch (error) {
+          logger.error("Scheduled reminder check failed:", error)
+        }
+      },
+      null,
+      true,
+      "America/New_York",
+    )
 
-    app.listen(PORT, () => {
-      console.log(`🚀 Server running on port ${PORT}`)
-      console.log(`📚 Swagger docs available at http://localhost:${PORT}/api-docs`)
-      console.log(`🏥 Health check at http://localhost:${PORT}/health`)
-      console.log(`📁 File uploads available at http://localhost:${PORT}/uploads`)
+    logger.info("Reminder cron job started")
+
+    // Start the server
+    const server = app.listen(PORT, () => {
+      logger.info(`Server is running on port ${PORT}`)
+      logger.info(`API Documentation available at http://localhost:${PORT}/api-docs`)
+      logger.info(`Student Reflection Page available at http://localhost:${PORT}/reflection`)
+    })
+
+    // Graceful shutdown
+    process.on("SIGTERM", async () => {
+      logger.info("SIGTERM signal received: closing HTTP server")
+      reminderJob.destroy()
+      server.close(() => {
+        logger.info("HTTP server closed")
+      })
+      await sequelize.close()
+      process.exit(0)
+    })
+
+    process.on("SIGINT", async () => {
+      logger.info("SIGINT signal received: closing HTTP server")
+      reminderJob.destroy()
+      server.close(() => {
+        logger.info("HTTP server closed")
+      })
+      await sequelize.close()
+      process.exit(0)
     })
   } catch (error) {
-    console.error("❌ Unable to start server:", error)
+    logger.error("Unable to start server:", error)
     process.exit(1)
   }
 }
+
+// Handle uncaught exceptions
+process.on("uncaughtException", (error) => {
+  logger.error("Uncaught Exception:", error)
+  process.exit(1)
+})
+
+// Handle unhandled promise rejections
+process.on("unhandledRejection", (error) => {
+  logger.error("Unhandled Rejection:", error)
+  process.exit(1)
+})
 
 startServer()
