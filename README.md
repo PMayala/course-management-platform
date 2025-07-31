@@ -9,6 +9,12 @@ This backend system supports three core modules:
 - **Facilitator Activity Tracker (FAT)** - Track weekly activities and automate compliance monitoring
 - **Student Reflection Page** - Multilingual interface with i18n/l10n support
 
+## 🎥 Video Walkthrough
+
+📹 **[Watch the Complete System Demo](https://youtu.be/3FvnUmShmjc)**
+
+Get a comprehensive overview of the Course Management Platform's features, API endpoints, and functionality through our detailed video walkthrough.
+
 ## 🚀 Features
 
 ### Core Functionality
@@ -183,7 +189,7 @@ Content-Type: application/json
   },
   "tokens": {
     "accessToken": "eyJhbGciOiJIUzI1NiIs...",
-    "refreshToken": "eyJhbGciOiJIUzI1NiIs..."
+    "refreshToken": "eyJhbGciOiJIUzI1NiFs..."
   }
 }
 ```
